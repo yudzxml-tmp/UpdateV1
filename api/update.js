@@ -1,5 +1,5 @@
 const { google } = require("googleapis");
-const { Busboy } = require("busboy");
+const formidable = require("formidable");
 const admin = require("firebase-admin");
 const stream = require("stream");
 
@@ -62,30 +62,24 @@ module.exports = async (req, res) => {
     if (adminKey !== process.env.ADMIN_SECRET_KEY)
       return res.status(403).json({ error: "Forbidden: Admin key salah" });
 
-    const busboy = new Busboy({ headers: req.headers });
-    const fields = {};
-    const fileChunks = [];
+    const form = formidable({ multiples: false });
 
-    busboy.on("file", (fieldname, file) => {
-      file.on("data", (chunk) => fileChunks.push(chunk));
-    });
+    form.parse(req, async (err, fields, files) => {
+      if (err) return res.status(500).json({ error: err.message });
 
-    busboy.on("field", (fieldname, val) => {
-      fields[fieldname] = val;
-    });
-
-    busboy.on("finish", async () => {
       try {
         const { author, title, version, keyScript, versionType } = fields;
-        if (!author || !title || !version || !keyScript || !versionType || fileChunks.length === 0)
+        const file = files.file;
+        if (!author || !title || !version || !keyScript || !versionType || !file)
           return res.status(400).json({ error: "Semua field wajib diisi + file wajib ada" });
         if (!["full", "lite"].includes(versionType.toLowerCase()))
           return res.status(400).json({ error: "versionType harus 'full' atau 'lite'" });
 
-        const buffer = Buffer.concat(fileChunks);
+        const fs = require("fs");
+        const buffer = fs.readFileSync(file.filepath);
         const fileName = `updates-${versionType}-${Date.now()}-${title}.zip`;
         const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
-        const fileDrive = await uploadBufferToDrive(buffer, fileName, "application/zip", folderId);
+        const fileDrive = await uploadBufferToDrive(buffer, fileName, file.mimetype, folderId);
 
         const updateDate = new Date().toISOString();
         const docRef = db.collection("updates").doc("bot");
@@ -115,7 +109,6 @@ module.exports = async (req, res) => {
       }
     });
 
-    req.pipe(busboy);
     return;
   }
 
