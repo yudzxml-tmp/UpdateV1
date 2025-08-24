@@ -24,6 +24,10 @@ button:hover { background:#2563eb; transform: translateY(-2px); }
 #progressContainer { margin-top:10px; width:100%; background: rgba(255,255,255,0.1); border-radius:12px; overflow:hidden; height:20px; display:none; }
 #progressBar { height:100%; width:0%; background:#3b82f6; transition: width 0.2s; }
 .file-info { margin-top:5px; font-size:13px; color:#94a3b8; text-align:left; }
+#updatesList { margin-top:30px; list-style:none; padding:0; text-align:left; }
+.update-item { background: rgba(255,255,255,0.05); margin-bottom:10px; padding:10px; border-radius:10px; font-size:14px; box-shadow:0 2px 6px rgba(0,0,0,0.2); }
+.update-item a { color:#3b82f6; text-decoration:none; word-break: break-all; }
+.update-item a:hover { text-decoration:underline; }
 @media(max-width:600px){ body{padding:15px 10px;} .card{padding:20px 15px; box-shadow:0 4px 12px rgba(0,0,0,0.3);} h2{font-size:1.3rem;} form input, form select{font-size:14px; padding:10px 35px 10px 10px;} .input-group i{right:10px;} button{font-size:15px; padding:10px;} #result{font-size:13px; padding:10px;} }
 </style>
 </head>
@@ -48,14 +52,25 @@ button:hover { background:#2563eb; transform: translateY(-2px); }
   <pre id="result"></pre>
 </div>
 
+<div class="card" style="margin-top:20px;">
+  <h2><i class="fa-solid fa-list"></i> Latest Updates</h2>
+  <ul id="updatesList"></ul>
+</div>
+
 <script>
+const API_URL = "https://update-v1.vercel.app/api/update"; // Ganti sesuai API mu
+const ADMIN_KEY = "UPDATE-X7BOTZ-MD-YUDZXML";
+const READ_KEY = "YUDZXMLDEVX7BOTZ";
+
 const form = document.getElementById("updateForm");
 const result = document.getElementById("result");
 const fileInput = document.getElementById("file");
 const fileInfo = document.getElementById("fileInfo");
 const progressContainer = document.getElementById("progressContainer");
 const progressBar = document.getElementById("progressBar");
+const updatesList = document.getElementById("updatesList");
 
+// Upload File
 fileInput.addEventListener("change", () => {
   const file = fileInput.files[0];
   if(file){
@@ -91,8 +106,8 @@ form.addEventListener("submit", async (e)=>{
 
   try{
     const xhr = new XMLHttpRequest();
-    xhr.open("POST","https://update-v1.vercel.app/api/update",true);
-    xhr.setRequestHeader("x-admin-key","UPDATE-X7BOTZ-MD-YUDZXML");
+    xhr.open("POST",API_URL,true);
+    xhr.setRequestHeader("x-admin-key",ADMIN_KEY);
 
     xhr.upload.onprogress=(event)=>{
       if(event.lengthComputable){
@@ -103,10 +118,14 @@ form.addEventListener("submit", async (e)=>{
     };
 
     xhr.onload=()=>{
+      progressContainer.style.display="none";
+      fileInfo.textContent="";
       if(xhr.status===200){
         try{
           const data = JSON.parse(xhr.responseText);
           result.textContent=JSON.stringify(data,null,2);
+          fetchUpdates();
+          form.reset();
         }catch(err){
           result.textContent="Error: Response bukan JSON.";
           console.error(err,xhr.responseText);
@@ -114,8 +133,6 @@ form.addEventListener("submit", async (e)=>{
       }else{
         result.textContent=`Error: ${xhr.status} ${xhr.statusText}`;
       }
-      progressContainer.style.display="none";
-      fileInfo.textContent="";
     };
 
     xhr.onerror=()=>{
@@ -129,6 +146,36 @@ form.addEventListener("submit", async (e)=>{
     progressContainer.style.display="none";
   }
 });
+
+// Fetch Latest Updates
+async function fetchUpdates(){
+  updatesList.innerHTML="Loading...";
+  try{
+    const res = await fetch(`${API_URL}?key=${READ_KEY}`);
+    const data = await res.json();
+    updatesList.innerHTML="";
+    if(data.status===200 && data.data.length>0){
+      data.data.forEach(u=>{
+        const li = document.createElement("li");
+        li.className="update-item";
+        li.innerHTML = `
+          <strong>${u.title}</strong> (${u.versionType} - v${u.version})<br>
+          Author: ${u.author}<br>
+          Updated: ${new Date(u.updateDate).toLocaleString()}<br>
+          <a href="${u.url}" target="_blank">Download</a>
+        `;
+        updatesList.appendChild(li);
+      });
+    }else{
+      updatesList.innerHTML="<li>Tidak ada update tersedia.</li>";
+    }
+  }catch(err){
+    updatesList.innerHTML="Gagal memuat updates: "+err.message;
+  }
+}
+
+// Load updates on page load
+fetchUpdates();
 </script>
 
 </body>
