@@ -1,4 +1,4 @@
-const formidable = require("formidable");
+const { formidable } = require("formidable");
 const admin = require("firebase-admin");
 const axios = require("axios");
 
