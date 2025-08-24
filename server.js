@@ -8,10 +8,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // --- Middleware ---
-app.use(bodyParser.json({ limit: "50mb" })); // untuk menerima fileBase64 besar
+app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
-
-// Serve file statis dari folder 'public' (index.html ada di sini)
 app.use(express.static(path.join(__dirname, "public")));
 
 // --- Inisialisasi Firebase Admin ---
@@ -46,10 +44,16 @@ async function uploadToCdn(fileBuffer, fileName) {
   }
 }
 
-// --- Fungsi ambil updates ---
+// --- Fungsi ambil updates (modifikasi: sertakan id) ---
 async function getUpdates() {
   const snapshot = await db.collection("updates").orderBy("updateDate", "desc").get();
-  return { status: 200, data: snapshot.docs.map(doc => doc.data()) };
+  return {
+    status: 200,
+    data: snapshot.docs.map(doc => ({
+      id: doc.id,       // <-- id ditambahkan
+      ...doc.data()
+    }))
+  };
 }
 
 // --- Route API ---
@@ -117,7 +121,7 @@ app.all("/api/updates", async (req, res) => {
       return res.status(200).json({
         success: true,
         message: `Update '${versionType}' berhasil diupload ke CDN`,
-        data: newData,
+        data: { id: docId, ...newData } // <-- sertakan id di response
       });
     } catch (err) {
       console.error("Upload error:", err);
@@ -135,10 +139,26 @@ app.all("/api/updates", async (req, res) => {
       const { docId } = req.query;
       if (!docId) return res.status(400).json({ error: "docId wajib diberikan" });
 
-      await db.collection("updates").doc(docId).delete();
-      return res.status(200).json({ success: true, message: `Update ${docId} berhasil dihapus.` });
+      const docRef = db.collection("updates").doc(docId);
+      const docSnapshot = await docRef.get();
+
+      console.log(`[DELETE] Request untuk docId: ${docId}`);
+
+      if (!docSnapshot.exists) {
+        console.warn(`[DELETE] Document ${docId} tidak ditemukan di Firestore.`);
+        return res.status(404).json({ error: `Document ${docId} tidak ditemukan.` });
+      }
+
+      await docRef.delete();
+      console.log(`[DELETE] Document ${docId} berhasil dihapus dari Firestore.`);
+
+      return res.status(200).json({
+        success: true,
+        message: `Update ${docId} berhasil dihapus.`,
+        deletedDoc: { id: docId, ...docSnapshot.data() } // sertakan id juga
+      });
     } catch (err) {
-      console.error("Delete error:", err);
+      console.error("[DELETE] Error:", err);
       return res.status(500).json({ error: err.message });
     }
   }
