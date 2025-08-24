@@ -9,13 +9,12 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
 <style>
-/* Reset & dasar */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: #0f172a;
   color: #f8fafc;
-  padding: 30px 15px;
+  padding: 20px 10px;
   text-align: center;
 }
 
@@ -23,10 +22,10 @@ body {
 .card {
   background: rgba(255,255,255,0.05);
   border-radius: 16px;
-  padding: 30px 20px;
+  padding: 25px 20px;
   max-width: 500px;
   width: 100%;
-  margin: auto;
+  margin: 15px auto;
   box-shadow: 0 6px 20px rgba(0,0,0,0.4);
   transition: transform 0.2s, box-shadow 0.3s;
 }
@@ -35,7 +34,6 @@ body {
   box-shadow: 0 10px 25px rgba(59,130,246,0.5);
 }
 
-/* Judul */
 h2 {
   margin-bottom: 20px;
   font-weight: 600;
@@ -92,21 +90,17 @@ button:hover {
   box-shadow: 0 4px 15px rgba(59,130,246,0.6);
 }
 
-/* Hasil upload / log */
-#result {
-  margin-top: 20px;
-  font-size: 14px;
+/* File info */
+.file-info {
+  margin-top: 5px;
+  font-size: 13px;
+  color: #94a3b8;
   text-align: left;
-  word-wrap: break-word;
-  background: rgba(255,255,255,0.05);
-  padding: 12px;
-  border-radius: 10px;
-  white-space: pre-wrap;
 }
 
 /* Progress bar */
 #progressContainer {
-  margin-top: 10px;
+  margin: 15px 0 10px 0;
   width: 100%;
   background: rgba(255,255,255,0.1);
   border-radius: 12px;
@@ -124,23 +118,26 @@ button:hover {
   box-shadow: 0 0 8px #3b82f6, inset 0 0 5px rgba(255,255,255,0.2);
 }
 
-/* File info */
-.file-info {
-  margin-top: 5px;
-  font-size: 13px;
-  color: #94a3b8;
+/* Hasil upload / log */
+#result {
+  margin-top: 10px;
+  font-size: 14px;
   text-align: left;
+  word-wrap: break-word;
+  background: rgba(255,255,255,0.05);
+  padding: 12px;
+  border-radius: 10px;
+  white-space: pre-wrap;
 }
 
 /* Daftar update */
 #updatesList {
-  margin-top: 30px;
+  margin-top: 20px;
   list-style: none;
   padding: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  text-align: left;
 }
 
 .update-item {
@@ -150,6 +147,9 @@ button:hover {
   font-size: 14px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.25);
   transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .update-item:hover {
   transform: translateY(-2px);
@@ -163,7 +163,7 @@ button:hover {
   gap: 6px;
   color: #3b82f6;
 }
-.update-item i { color: #60a5fa; }
+
 .update-item .author i { color: #facc15; margin-right: 4px; }
 .update-item .date i { color: #34d399; margin-right: 4px; }
 
@@ -173,10 +173,28 @@ button:hover {
   gap: 4px;
   text-decoration: none;
   color: #3b82f6;
-  margin-top: 4px;
   transition: color 0.2s;
 }
 .update-item a:hover { color: #60a5fa; }
+
+/* Tombol delete update */
+.update-item button.delete-btn {
+  margin-top: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: center;
+}
+.update-item button.delete-btn:hover {
+  background: #dc2626;
+}
 
 /* Loading/Error */
 .update-item-loading,
@@ -196,7 +214,7 @@ button:hover {
   color: #3b82f6;
 }
 
-/* Animasi spin */
+/* spin animation */
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -204,86 +222,14 @@ button:hover {
 
 /* Responsive */
 @media(max-width:600px){
-  body{ padding: 15px 10px; }
-  .card{ padding: 20px 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+  body{ padding: 10px; }
+  .card{ padding: 15px 12px; margin: 10px auto; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
   h2{ font-size: 1.3rem; }
   form input, form select{ font-size: 14px; padding: 10px 35px 10px 10px; }
   .input-group i{ right: 10px; }
   button{ font-size: 15px; padding: 10px; }
   #result{ font-size: 13px; padding: 10px; }
-}
-</style>
-<style>
-#updatesList {
-  margin-top: 30px;
-  list-style: none;
-  padding: 0;
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.update-item {
-  background: rgba(255,255,255,0.05);
-  padding: 15px 12px;
-  border-radius: 12px;
-  font-size: 14px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-}
-
-.update-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(59,130,246,0.4);
-  background: rgba(59,130,246,0.05);
-}
-
-.update-item strong {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #3b82f6;
-}
-
-.update-item i {
-  color: #60a5fa;
-}
-
-.update-item .author i { color: #facc15; margin-right: 4px; }
-.update-item .date i { color: #34d399; margin-right: 4px; }
-.update-item a {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  text-decoration: none;
-  color: #3b82f6;
-  margin-top: 4px;
-  transition: color 0.2s;
-}
-.update-item a:hover { color: #60a5fa; }
-
-.update-item-loading,
-.update-item-error {
-  background: rgba(255,255,255,0.08);
-  padding: 12px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: #f8fafc;
-}
-.update-item-loading i,
-.update-item-error i {
-  animation: spin 1s linear infinite;
-  color: #3b82f6;
-}
-
-/* spin animation for loader */
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  #progressContainer{ height: 18px; }
 }
 </style>
 </head>
@@ -308,14 +254,13 @@ button:hover {
   <pre id="result"></pre>
 </div>
 
-<div class="card" style="margin-top:20px;">
+<div class="card">
   <h2><i class="fa-solid fa-list"></i> Latest Updates</h2>
   <ul id="updatesList"></ul>
 </div>
 
-
 <script>
-const API_URL = "/api/updates";  // backend serve di route ini
+const API_URL = "/api/updates";
 const ADMIN_KEY = "UPDATE-X7BOTZ-MD-YUDZXML";
 const READ_KEY = "YUDZXMLDEVX7BOTZ";
 
@@ -337,114 +282,92 @@ function fileToBase64(file) {
   });
 }
 
-// Update File Info
+// File info
 fileInput.addEventListener("change", () => {
   const file = fileInput.files[0];
   if (file) {
-    fileInfo.innerHTML = `<i class="fas fa-file-upload"></i> File: ${file.name} 
-      <i class="fas fa-weight-hanging"></i> ${(file.size/1024/1024).toFixed(2)} MB`;
-  } else {
-    fileInfo.textContent = "";
-  }
+    fileInfo.innerHTML = `<i class="fas fa-file-upload"></i> ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)`;
+  } else fileInfo.textContent = "";
 });
 
-// Submit form
+// Submit update
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-
   const author = document.getElementById("author").value.trim();
   const title = document.getElementById("title").value.trim();
   const version = document.getElementById("version").value.trim();
   const keyScript = document.getElementById("keyScript").value.trim();
   const versionType = document.getElementById("versionType").value;
   const file = fileInput.files[0];
+  if (!file || !versionType) return result.innerHTML = "⚠ Pilih semua field!";
 
-  if (!file) {
-    result.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Harap pilih file update!';
-    return;
-  }
-  if (!versionType) {
-    result.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Harap pilih versi update!';
-    return;
-  }
-
-  progressContainer.style.display = "block";
-  progressBar.style.width = "0%";
-
+  progressContainer.style.display = "block"; progressBar.style.width = "0%";
   try {
     const fileBase64 = await fileToBase64(file);
-
-    // animasi progres dummy
     let percent = 0;
-    const interval = setInterval(() => {
-      if (percent >= 90) return clearInterval(interval);
-      percent += 10;
-      progressBar.style.width = percent + "%";
-    }, 150);
+    const interval = setInterval(() => { if(percent>=90) clearInterval(interval); percent+=10; progressBar.style.width=percent+"%"; },150);
 
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-admin-key": ADMIN_KEY,
-      },
-      body: JSON.stringify({
-        author, title, version, keyScript, versionType, fileBase64,
-      }),
-    });
-
+    const res = await fetch(API_URL,{method:"POST", headers:{"Content-Type":"application/json","x-admin-key":ADMIN_KEY}, body:JSON.stringify({author,title,version,keyScript,versionType,fileBase64})});
     const data = await res.json();
+    clearInterval(interval); progressBar.style.width="100%";
 
-    clearInterval(interval);
-    progressBar.style.width = "100%";
-
-    if (res.ok) {
-      result.innerHTML = `<i class="fas fa-check-circle"></i> Update berhasil diupload!`;
-      form.reset();
-      fileInfo.textContent = "";
-      fetchUpdates(); // refresh list
-    } else {
-      throw new Error(data.error || "Upload gagal");
-    }
-  } catch (err) {
-    result.innerHTML = `<i class="fas fa-times-circle"></i> Error: ${err.message}`;
-  } finally {
-    progressContainer.style.display = "none";
-  }
+    if(res.ok){ result.innerHTML = "✅ Update berhasil!"; form.reset(); fileInfo.textContent=""; fetchUpdates(); }
+    else throw new Error(data.error||"Upload gagal");
+  } catch(err){ result.innerHTML = `❌ Error: ${err.message}`; }
+  finally{ progressContainer.style.display="none"; }
 });
 
-// Ambil updates
-async function fetchUpdates() {
+// Delete update
+async function deleteUpdate(docId, element){
+  if(!confirm("⚠ Yakin ingin menghapus update ini?")) return;
+  try{
+    const res = await fetch(`${API_URL}?docId=${docId}`, {method:"DELETE", headers:{"x-admin-key":ADMIN_KEY}});
+    const data = await res.json();
+    if(res.ok){
+      element.remove();
+      alert("✅ Update berhasil dihapus!");
+    } else {
+      throw new Error(data.error || "Gagal menghapus update");
+    }
+  } catch(err){
+    alert("❌ Error: " + err.message);
+  }
+}
+
+// Fetch updates
+async function fetchUpdates(){
   updatesList.innerHTML = '<li><i class="fas fa-spinner fa-spin"></i> Loading...</li>';
   try {
     const res = await fetch(`${API_URL}?key=${READ_KEY}`);
     const data = await res.json();
-
     updatesList.innerHTML = "";
-    if (data.status === 200 && data.data.length > 0) {
-      data.data.forEach((u) => {
+    if(data.status === 200 && data.data.length > 0){
+      data.data.forEach(u => {
         const li = document.createElement("li");
         li.className = "update-item";
         li.innerHTML = `
-          <strong><i class="fas fa-rocket"></i> ${u.title}</strong> 
+          <strong><i class="fas fa-rocket"></i> ${u.title}</strong>
           (${u.versionType} - v${u.version})<br>
           <div class="author"><i class="fas fa-user"></i> ${u.author}</div>
           <div class="date"><i class="fas fa-calendar-alt"></i> ${u.updateDate}</div>
           <a href="${u.url}" target="_blank"><i class="fas fa-download"></i> Download</a>
+          <button class="delete-btn"><i class="fas fa-trash"></i> Hapus</button>
         `;
         updatesList.appendChild(li);
+
+        // Event delete
+        li.querySelector(".delete-btn").addEventListener("click", () => deleteUpdate(u.id, li));
       });
     } else {
       updatesList.innerHTML = '<li><i class="fas fa-info-circle"></i> Tidak ada update tersedia.</li>';
     }
-  } catch (err) {
+  } catch(err){
     updatesList.innerHTML = `<li><i class="fas fa-exclamation-triangle"></i> Gagal memuat updates: ${err.message}</li>`;
   }
 }
 
-// load awal
+// Initial load
 fetchUpdates();
 </script>
-
 </body>
 </html>
