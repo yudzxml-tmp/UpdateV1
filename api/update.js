@@ -73,17 +73,23 @@ module.exports = async (req, res) => {
       if (err) return res.status(500).json({ error: err.message });
 
       try {
-        const { author, title, version, keyScript, versionType } = fields;
+        // pastikan semua field string
+        const author = String(fields.author || "");
+        const title = String(fields.title || "");
+        const version = String(fields.version || "");
+        const keyScript = String(fields.keyScript || "");
+        const versionType = String(fields.versionType || "").toLowerCase();
         const file = files.file;
+
         if (!author || !title || !version || !keyScript || !versionType || !file)
           return res.status(400).json({ error: "Semua field wajib diisi + file wajib ada" });
-        if (!["full", "lite"].includes(versionType.toLowerCase()))
+
+        if (!["full", "lite"].includes(versionType))
           return res.status(400).json({ error: "versionType harus 'full' atau 'lite'" });
 
         const fileName = `updates-${versionType}-${Date.now()}-${title}.zip`;
         const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
-        // upload langsung dari stream tanpa readFileSync
         const fileDrive = await uploadFileStreamToDrive(file.filepath, fileName, file.mimetype, folderId);
 
         const updateDate = new Date().toISOString();
@@ -97,8 +103,8 @@ module.exports = async (req, res) => {
           version,
           keyScript,
           updateDate,
-          url_full: versionType.toLowerCase() === "full" ? fileDrive.downloadLink : oldData.url_full || "",
-          url_lite: versionType.toLowerCase() === "lite" ? fileDrive.downloadLink : oldData.url_lite || "",
+          url_full: versionType === "full" ? fileDrive.downloadLink : oldData.url_full || "",
+          url_lite: versionType === "lite" ? fileDrive.downloadLink : oldData.url_lite || "",
         };
 
         await docRef.set(newData);
