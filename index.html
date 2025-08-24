@@ -226,10 +226,11 @@ form.addEventListener("submit", async (e) => {
   try {
     console.log("Mengirim request ke /api/update:", { author, title, version, keyScript, versionType, file });
 
-    const res = await fetch("/api/update", {
+    const res = await fetch("https://update-v1.vercel.app/api/update", {
       method: "POST",
       headers: {
         "x-admin-key": "UPDATE-X7BOTZ-MD-YUDZXML"
+        // ❌ Jangan set 'Content-Type', biarkan browser handle multipart
       },
       body: formData
     });
@@ -243,7 +244,7 @@ form.addEventListener("submit", async (e) => {
       data = JSON.parse(text); // parse manual JSON
       console.log("Response JSON:", data);
       result.textContent = JSON.stringify(data, null, 2);
-    } catch {
+    } catch (err) {
       console.error("Response bukan JSON:", text);
       result.textContent = "Error: Response bukan JSON. Lihat console.";
     }
