@@ -2,6 +2,7 @@ const { google } = require("googleapis");
 const formidable = require("formidable");
 const admin = require("firebase-admin");
 const stream = require("stream");
+const fs = require("fs");
 
 if (!admin.apps.length) {
   const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
@@ -17,14 +18,17 @@ const driveAuth = new google.auth.GoogleAuth({
 });
 const drive = google.drive({ version: "v3", auth: driveAuth });
 
-async function uploadBufferToDrive(buffer, fileName, mimetype, folderId) {
+async function uploadFileStreamToDrive(filePath, fileName, mimetype, folderId) {
+  const fileStream = fs.createReadStream(filePath);
   const bufferStream = new stream.PassThrough();
-  bufferStream.end(buffer);
+  fileStream.pipe(bufferStream);
+
   const response = await drive.files.create({
     requestBody: { name: fileName, parents: [folderId] },
     media: { mimeType: mimetype, body: bufferStream },
     fields: "id, webViewLink, webContentLink",
   });
+
   return {
     fileId: response.data.id,
     viewLink: response.data.webViewLink,
@@ -48,7 +52,8 @@ module.exports = async (req, res) => {
 
   if (req.method === "GET") {
     const { key } = req.query;
-    if (key !== "YUDZXMLDEVX7BOTZ") return res.status(400).json({ error: "Key tidak valid." });
+    if (key !== "YUDZXMLDEVX7BOTZ")
+      return res.status(400).json({ error: "Key tidak valid." });
     try {
       const data = await updatebot();
       return res.status(200).json(data);
@@ -62,7 +67,7 @@ module.exports = async (req, res) => {
     if (adminKey !== process.env.ADMIN_SECRET_KEY)
       return res.status(403).json({ error: "Forbidden: Admin key salah" });
 
-    const form = formidable({ multiples: false });
+    const form = formidable({ multiples: false, keepExtensions: true });
 
     form.parse(req, async (err, fields, files) => {
       if (err) return res.status(500).json({ error: err.message });
@@ -75,11 +80,11 @@ module.exports = async (req, res) => {
         if (!["full", "lite"].includes(versionType.toLowerCase()))
           return res.status(400).json({ error: "versionType harus 'full' atau 'lite'" });
 
-        const fs = require("fs");
-        const buffer = fs.readFileSync(file.filepath);
         const fileName = `updates-${versionType}-${Date.now()}-${title}.zip`;
         const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
-        const fileDrive = await uploadBufferToDrive(buffer, fileName, file.mimetype, folderId);
+
+        // upload langsung dari stream tanpa readFileSync
+        const fileDrive = await uploadFileStreamToDrive(file.filepath, fileName, file.mimetype, folderId);
 
         const updateDate = new Date().toISOString();
         const docRef = db.collection("updates").doc("bot");
