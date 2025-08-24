@@ -224,6 +224,10 @@ button:hover {
     result.textContent = "Mengupload...";
 
     try {
+      console.log("Mengirim request ke /api/update dengan data berikut:", {
+        author, title, version, keyScript, versionType, file
+      });
+
       const res = await fetch("/api/update", {
         method: "POST",
         headers: {
@@ -232,9 +236,22 @@ button:hover {
         body: formData
       });
 
-      const data = await res.json();
-      result.textContent = JSON.stringify(data, null, 2);
+      console.log("Response status:", res.status, res.statusText);
+      console.log("Response headers:", Array.from(res.headers.entries()));
+
+      let data;
+      try {
+        data = await res.json();
+        console.log("Response JSON:", data);
+        result.textContent = JSON.stringify(data, null, 2);
+      } catch (jsonErr) {
+        const text = await res.text();
+        console.error("Gagal parse JSON. Response text:", text);
+        result.textContent = "Error: Response bukan JSON. Lihat console.";
+      }
+
     } catch (err) {
+      console.error("Fetch error:", err);
       result.textContent = "Error: " + err.message;
     }
   });
