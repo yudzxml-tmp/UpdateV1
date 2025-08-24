@@ -429,7 +429,7 @@ async function fetchUpdates() {
           <strong><i class="fas fa-rocket"></i> ${u.title}</strong> 
           (${u.versionType} - v${u.version})<br>
           <div class="author"><i class="fas fa-user"></i> ${u.author}</div>
-          <div class="date"><i class="fas fa-calendar-alt"></i> ${new Date(u.updateDate).toLocaleString()}</div>
+          <div class="date"><i class="fas fa-calendar-alt"></i> ${u.updateDate}</div>
           <a href="${u.url}" target="_blank"><i class="fas fa-download"></i> Download</a>
         `;
         updatesList.appendChild(li);
@@ -447,4 +447,4 @@ fetchUpdates();
 </script>
 
 </body>
-  </html>
+</html>
