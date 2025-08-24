@@ -1,5 +1,5 @@
 const { google } = require("googleapis");
-const Busboy = require("busboy");
+const { Busboy } = require("busboy");
 const admin = require("firebase-admin");
 const stream = require("stream");
 
