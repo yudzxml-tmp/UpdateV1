@@ -1,4 +1,3 @@
-const { formidable } = require("formidable");
 const admin = require("firebase-admin");
 const axios = require("axios");
 
@@ -64,65 +63,49 @@ module.exports = async (req, res) => {
     if (adminKey !== process.env.ADMIN_SECRET_KEY)
       return res.status(403).json({ error: "Forbidden: Admin key salah" });
 
-    const form = formidable({ multiples: false, keepExtensions: true });
+    try {
+      const { author, title, version, keyScript, versionType, fileBase64 } = req.body;
 
-    form.parse(req, async (err, fields, files) => {
-      if (err) return res.status(500).json({ error: err.message });
+      if (!author || !title || !version || !keyScript || !versionType || !fileBase64)
+        return res.status(400).json({ error: "Semua field wajib diisi + fileBase64 wajib ada" });
 
-      try {
-        const author = String(fields.author?.[0] || "");
-        const title = String(fields.title?.[0] || "");
-        const version = String(fields.version?.[0] || "");
-        const keyScript = String(fields.keyScript?.[0] || "");
-        const versionType = String(fields.versionType?.[0] || "").toLowerCase();
+      if (!["full", "lite"].includes(versionType.toLowerCase()))
+        return res.status(400).json({ error: "versionType harus 'full' atau 'lite'" });
 
-        const file = files.file?.[0];
-        if (!author || !title || !version || !keyScript || !versionType || !file)
-          return res.status(400).json({ error: "Semua field wajib diisi + file wajib ada" });
+      const fileBuffer = Buffer.from(fileBase64, "base64");
+      const fileName = `updates-${versionType.toLowerCase()}-${Date.now()}-${title}.zip`;
 
-        if (!["full", "lite"].includes(versionType))
-          return res.status(400).json({ error: "versionType harus 'full' atau 'lite'" });
+      const cdnResult = await YudzGithubCdn(fileBuffer, fileName);
 
-        const fileBuffer = file.filebuffer || file._writeStream?.buffer;
-        if (!fileBuffer) {
-          throw new Error("File buffer tidak ditemukan");
-        }
-
-        const fileName = `updates-${versionType}-${Date.now()}-${title}.zip`;
-        const cdnResult = await YudzGithubCdn(fileBuffer, fileName);
-
-        if (cdnResult.error) {
-          throw new Error(cdnResult.error);
-        }
-
-        const updateDate = new Date().toISOString();
-        const docId = `${versionType}-${Date.now()}`;
-        const docRef = db.collection("updates").doc(docId);
-
-        const newData = {
-          author,
-          title,
-          version,
-          keyScript,
-          versionType,
-          updateDate,
-          url: cdnResult.data.url || cdnResult.url || "",
-        };
-
-        await docRef.set(newData);
-
-        return res.status(200).json({
-          success: true,
-          message: `Update '${versionType}' berhasil diupload ke CDN`,
-          data: newData,
-        });
-      } catch (err) {
-        console.error("Upload error:", err);
-        return res.status(500).json({ error: err.message });
+      if (cdnResult.error) {
+        throw new Error(cdnResult.error);
       }
-    });
 
-    return;
+      const updateDate = new Date().toISOString();
+      const docId = `${versionType.toLowerCase()}-${Date.now()}`;
+      const docRef = db.collection("updates").doc(docId);
+
+      const newData = {
+        author,
+        title,
+        version,
+        keyScript,
+        versionType: versionType.toLowerCase(),
+        updateDate,
+        url: cdnResult.data.url || cdnResult.url || "",
+      };
+
+      await docRef.set(newData);
+
+      return res.status(200).json({
+        success: true,
+        message: `Update '${versionType}' berhasil diupload ke CDN`,
+        data: newData,
+      });
+    } catch (err) {
+      console.error("Upload error:", err);
+      return res.status(500).json({ error: err.message });
+    }
   }
 
   res.setHeader("Allow", ["GET", "POST"]);
