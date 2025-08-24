@@ -1,0 +1,16 @@
+{
+  "name": "vercel-project",
+  "version": "1.0.0",
+  "description": "Frontend HTML + Backend API untuk Vercel",
+  "type": "commonjs",
+  "dependencies": {
+    "googleapis": "^121.0.0",
+    "busboy": "^1.6.0",
+    "firebase-admin": "^12.0.0"
+  },
+  "engines": {
+    "node": "18.x"
+  },
+  "author": "Yudzxml",
+  "license": "MIT"
+}
