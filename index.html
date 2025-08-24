@@ -191,70 +191,68 @@ button:hover {
 </div>
 
 <script>
-  const form = document.getElementById("updateForm");
-  const result = document.getElementById("result");
+const form = document.getElementById("updateForm");
+const result = document.getElementById("result");
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-    const author = document.getElementById("author").value;
-    const title = document.getElementById("title").value;
-    const version = document.getElementById("version").value;
-    const keyScript = document.getElementById("keyScript").value;
-    const versionType = document.getElementById("versionType").value;
-    const file = document.getElementById("file").files[0];
+  const author = document.getElementById("author").value;
+  const title = document.getElementById("title").value;
+  const version = document.getElementById("version").value;
+  const keyScript = document.getElementById("keyScript").value;
+  const versionType = document.getElementById("versionType").value;
+  const file = document.getElementById("file").files[0];
 
-    if (!file) {
-      result.textContent = "Harap pilih file update!";
-      return;
-    }
-    if (!versionType) {
-      result.textContent = "Harap pilih versi update (Full/Lite)!";
-      return;
-    }
+  if (!file) {
+    result.textContent = "Harap pilih file update!";
+    return;
+  }
+  if (!versionType) {
+    result.textContent = "Harap pilih versi update (Full/Lite)!";
+    return;
+  }
 
-    const formData = new FormData();
-    formData.append("author", author);
-    formData.append("title", title);
-    formData.append("version", version);
-    formData.append("keyScript", keyScript);
-    formData.append("versionType", versionType);
-    formData.append("file", file);
+  const formData = new FormData();
+  formData.append("author", author);
+  formData.append("title", title);
+  formData.append("version", version);
+  formData.append("keyScript", keyScript);
+  formData.append("versionType", versionType);
+  formData.append("file", file);
 
-    result.textContent = "Mengupload...";
+  result.textContent = "Mengupload...";
 
+  try {
+    console.log("Mengirim request ke /api/update:", { author, title, version, keyScript, versionType, file });
+
+    const res = await fetch("/api/update", {
+      method: "POST",
+      headers: {
+        "x-admin-key": "UPDATE-X7BOTZ-MD-YUDZXML"
+      },
+      body: formData
+    });
+
+    console.log("Response status:", res.status, res.statusText);
+    console.log("Response headers:", Array.from(res.headers.entries()));
+
+    const text = await res.text(); // baca body hanya sekali
+    let data;
     try {
-      console.log("Mengirim request ke /api/update dengan data berikut:", {
-        author, title, version, keyScript, versionType, file
-      });
-
-      const res = await fetch("/api/update", {
-        method: "POST",
-        headers: {
-          "x-admin-key": "UPDATE-X7BOTZ-MD-YUDZXML"
-        },
-        body: formData
-      });
-
-      console.log("Response status:", res.status, res.statusText);
-      console.log("Response headers:", Array.from(res.headers.entries()));
-
-      let data;
-      try {
-        data = await res.json();
-        console.log("Response JSON:", data);
-        result.textContent = JSON.stringify(data, null, 2);
-      } catch (jsonErr) {
-        const text = await res.text();
-        console.error("Gagal parse JSON. Response text:", text);
-        result.textContent = "Error: Response bukan JSON. Lihat console.";
-      }
-
-    } catch (err) {
-      console.error("Fetch error:", err);
-      result.textContent = "Error: " + err.message;
+      data = JSON.parse(text); // parse manual JSON
+      console.log("Response JSON:", data);
+      result.textContent = JSON.stringify(data, null, 2);
+    } catch {
+      console.error("Response bukan JSON:", text);
+      result.textContent = "Error: Response bukan JSON. Lihat console.";
     }
-  });
+
+  } catch (err) {
+    console.error("Fetch error:", err);
+    result.textContent = "Error: " + err.message;
+  }
+});
 </script>
 
 </body>
