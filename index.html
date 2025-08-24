@@ -70,7 +70,20 @@ const progressContainer = document.getElementById("progressContainer");
 const progressBar = document.getElementById("progressBar");
 const updatesList = document.getElementById("updatesList");
 
-// Upload File
+// Convert file to Base64
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file); // hasilnya: data:application/zip;base64,xxxx
+    reader.onload = () => {
+      const base64 = reader.result.split(",")[1]; // ambil bagian setelah koma
+      resolve(base64);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+}
+
+// Update File Info
 fileInput.addEventListener("change", () => {
   const file = fileInput.files[0];
   if(file){
@@ -80,6 +93,7 @@ fileInput.addEventListener("change", () => {
   }
 });
 
+// Submit form
 form.addEventListener("submit", async (e)=>{
   e.preventDefault();
   const author = document.getElementById("author").value;
@@ -92,62 +106,55 @@ form.addEventListener("submit", async (e)=>{
   if(!file){ result.textContent="Harap pilih file update!"; return; }
   if(!versionType){ result.textContent="Harap pilih versi update (Full/Lite)!"; return; }
 
-  const formData = new FormData();
-  formData.append("author", author);
-  formData.append("title", title);
-  formData.append("version", version);
-  formData.append("keyScript", keyScript);
-  formData.append("versionType", versionType);
-  formData.append("file", file);
-
   result.textContent="";
   progressContainer.style.display="block";
   progressBar.style.width="0%";
 
   try{
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST",API_URL,true);
-    xhr.setRequestHeader("x-admin-key",ADMIN_KEY);
+    const fileBase64 = await fileToBase64(file);
 
-    xhr.upload.onprogress=(event)=>{
-      if(event.lengthComputable){
-        const percent = ((event.loaded/event.total)*100).toFixed(2);
-        progressBar.style.width=`${percent}%`;
-        fileInfo.textContent = `File: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB) - ${percent}%`;
-      }
-    };
+    // Simple progress simulation
+    let percent = 0;
+    const interval = setInterval(()=>{
+      if(percent>=90) { clearInterval(interval); return; }
+      percent += 10;
+      progressBar.style.width = percent + "%";
+      fileInfo.textContent = `File: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB) - ${percent}%`;
+    }, 100);
 
-    xhr.onload=()=>{
-      progressContainer.style.display="none";
-      fileInfo.textContent="";
-      if(xhr.status===200){
-        try{
-          const data = JSON.parse(xhr.responseText);
-          result.textContent=JSON.stringify(data,null,2);
-          fetchUpdates();
-          form.reset();
-        }catch(err){
-          result.textContent="Error: Response bukan JSON.";
-          console.error(err,xhr.responseText);
-        }
-      }else{
-        result.textContent=`Error: ${xhr.status} ${xhr.statusText}`;
-      }
-    };
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-key": ADMIN_KEY
+      },
+      body: JSON.stringify({
+        author,
+        title,
+        version,
+        keyScript,
+        versionType,
+        fileBase64
+      })
+    });
 
-    xhr.onerror=()=>{
-      result.textContent="Upload gagal. Periksa koneksi.";
-      progressContainer.style.display="none";
-    };
+    progressBar.style.width = "100%";
+    fileInfo.textContent = `File: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB) - 100%`;
 
-    xhr.send(formData);
+    const data = await res.json();
+    result.textContent = JSON.stringify(data, null, 2);
+
+    progressContainer.style.display="none";
+    fileInfo.textContent="";
+    form.reset();
+    fetchUpdates();
   }catch(err){
     result.textContent="Error: "+err.message;
     progressContainer.style.display="none";
   }
 });
 
-// Fetch Latest Updates
+// Fetch Latest Updates (sama seperti sebelumnya)
 async function fetchUpdates(){
   updatesList.innerHTML="Loading...";
   try{
