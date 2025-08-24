@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YUDZXML Update Admin Panel</title>
+
+<!-- Font Awesome CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+<style>
+/* Reset & dasar */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 30px 15px;
+  text-align: center;
+}
+
+/* Card utama */
+.card {
+  background: rgba(255,255,255,0.05);
+  border-radius: 16px;
+  padding: 30px 20px;
+  max-width: 500px;
+  width: 100%;
+  margin: auto;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  transition: transform 0.2s, box-shadow 0.3s;
+}
+.card:hover { 
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(59,130,246,0.5);
+}
+
+/* Judul */
+h2 {
+  margin-bottom: 20px;
+  font-weight: 600;
+  font-size: 1.6rem;
+  color: #3b82f6;
+}
+
+/* Form input */
+form .input-group { position: relative; margin-bottom: 15px; }
+form input, form select {
+  width: 100%;
+  padding: 12px 40px 12px 12px;
+  border-radius: 10px;
+  border: none;
+  font-size: 15px;
+  background: rgba(255,255,255,0.1);
+  color: #f8fafc;
+  outline: none;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+form input:focus, form select:focus {
+  background: rgba(255,255,255,0.2);
+  box-shadow: 0 0 8px #3b82f6;
+}
+.input-group i {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+/* Tombol */
+button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(90deg,#3b82f6,#2563eb);
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+}
+button:hover {
+  background: linear-gradient(90deg,#2563eb,#1e40af);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(59,130,246,0.6);
+}
+
+/* Hasil upload / log */
+#result {
+  margin-top: 20px;
+  font-size: 14px;
+  text-align: left;
+  word-wrap: break-word;
+  background: rgba(255,255,255,0.05);
+  padding: 12px;
+  border-radius: 10px;
+  white-space: pre-wrap;
+}
+
+/* Progress bar */
+#progressContainer {
+  margin-top: 10px;
+  width: 100%;
+  background: rgba(255,255,255,0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  height: 20px;
+  display: none;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+}
+#progressBar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg,#3b82f6,#60a5fa);
+  transition: width 0.3s ease;
+  border-radius: 12px;
+  box-shadow: 0 0 8px #3b82f6, inset 0 0 5px rgba(255,255,255,0.2);
+}
+
+/* File info */
+.file-info {
+  margin-top: 5px;
+  font-size: 13px;
+  color: #94a3b8;
+  text-align: left;
+}
+
+/* Daftar update */
+#updatesList {
+  margin-top: 30px;
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+
+.update-item {
+  background: rgba(255,255,255,0.05);
+  padding: 15px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.update-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(59,130,246,0.4);
+  background: rgba(59,130,246,0.05);
+}
+
+.update-item strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #3b82f6;
+}
+.update-item i { color: #60a5fa; }
+.update-item .author i { color: #facc15; margin-right: 4px; }
+.update-item .date i { color: #34d399; margin-right: 4px; }
+
+.update-item a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  color: #3b82f6;
+  margin-top: 4px;
+  transition: color 0.2s;
+}
+.update-item a:hover { color: #60a5fa; }
+
+/* Loading/Error */
+.update-item-loading,
+.update-item-error {
+  background: rgba(255,255,255,0.08);
+  padding: 12px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #f8fafc;
+}
+.update-item-loading i,
+.update-item-error i {
+  animation: spin 1s linear infinite;
+  color: #3b82f6;
+}
+
+/* Animasi spin */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media(max-width:600px){
+  body{ padding: 15px 10px; }
+  .card{ padding: 20px 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+  h2{ font-size: 1.3rem; }
+  form input, form select{ font-size: 14px; padding: 10px 35px 10px 10px; }
+  .input-group i{ right: 10px; }
+  button{ font-size: 15px; padding: 10px; }
+  #result{ font-size: 13px; padding: 10px; }
+}
+</style>
+<style>
+#updatesList {
+  margin-top: 30px;
+  list-style: none;
+  padding: 0;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.update-item {
+  background: rgba(255,255,255,0.05);
+  padding: 15px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.update-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(59,130,246,0.4);
+  background: rgba(59,130,246,0.05);
+}
+
+.update-item strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #3b82f6;
+}
+
+.update-item i {
+  color: #60a5fa;
+}
+
+.update-item .author i { color: #facc15; margin-right: 4px; }
+.update-item .date i { color: #34d399; margin-right: 4px; }
+.update-item a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  color: #3b82f6;
+  margin-top: 4px;
+  transition: color 0.2s;
+}
+.update-item a:hover { color: #60a5fa; }
+
+.update-item-loading,
+.update-item-error {
+  background: rgba(255,255,255,0.08);
+  padding: 12px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #f8fafc;
+}
+.update-item-loading i,
+.update-item-error i {
+  animation: spin 1s linear infinite;
+  color: #3b82f6;
+}
+
+/* spin animation for loader */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h2><i class="fa-solid fa-gears"></i> YUDZXML UPDATE SCRIPT</h2>
+  <form id="updateForm">
+    <div class="input-group"><input type="text" id="author" placeholder="Author" required /><i class="fa-solid fa-user"></i></div>
+    <div class="input-group"><input type="text" id="title" placeholder="Title" required /><i class="fa-solid fa-heading"></i></div>
+    <div class="input-group"><input type="text" id="version" placeholder="Version" required /><i class="fa-solid fa-code-branch"></i></div>
+    <div class="input-group"><input type="text" id="keyScript" placeholder="Key Script" required /><i class="fa-solid fa-key"></i></div>
+    <div class="input-group"><select id="versionType" required><option value="">-- Pilih Versi --</option><option value="full">Full</option><option value="lite">Lite</option></select><i class="fa-solid fa-list"></i></div>
+    <div class="input-group">
+      <input type="file" id="file" accept=".zip" required />
+      <i class="fa-solid fa-file-zipper"></i>
+    </div>
+    <div class="file-info" id="fileInfo"></div>
+    <div id="progressContainer"><div id="progressBar"></div></div>
+    <button type="submit"><i class="fa-solid fa-upload"></i> Upload Update</button>
+  </form>
+  <pre id="result"></pre>
+</div>
+
+<div class="card" style="margin-top:20px;">
+  <h2><i class="fa-solid fa-list"></i> Latest Updates</h2>
+  <ul id="updatesList"></ul>
+</div>
+
+
+<script>
+const API_URL = "/api/updates";  // backend serve di route ini
+const ADMIN_KEY = "UPDATE-X7BOTZ-MD-YUDZXML";
+const READ_KEY = "YUDZXMLDEVX7BOTZ";
+
+const form = document.getElementById("updateForm");
+const result = document.getElementById("result");
+const fileInput = document.getElementById("file");
+const fileInfo = document.getElementById("fileInfo");
+const progressContainer = document.getElementById("progressContainer");
+const progressBar = document.getElementById("progressBar");
+const updatesList = document.getElementById("updatesList");
+
+// Convert file to Base64
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result.split(",")[1]);
+    reader.onerror = reject;
+  });
+}
+
+// Update File Info
+fileInput.addEventListener("change", () => {
+  const file = fileInput.files[0];
+  if (file) {
+    fileInfo.innerHTML = `<i class="fas fa-file-upload"></i> File: ${file.name} 
+      <i class="fas fa-weight-hanging"></i> ${(file.size/1024/1024).toFixed(2)} MB`;
+  } else {
+    fileInfo.textContent = "";
+  }
+});
+
+// Submit form
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const author = document.getElementById("author").value.trim();
+  const title = document.getElementById("title").value.trim();
+  const version = document.getElementById("version").value.trim();
+  const keyScript = document.getElementById("keyScript").value.trim();
+  const versionType = document.getElementById("versionType").value;
+  const file = fileInput.files[0];
+
+  if (!file) {
+    result.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Harap pilih file update!';
+    return;
+  }
+  if (!versionType) {
+    result.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Harap pilih versi update!';
+    return;
+  }
+
+  progressContainer.style.display = "block";
+  progressBar.style.width = "0%";
+
+  try {
+    const fileBase64 = await fileToBase64(file);
+
+    // animasi progres dummy
+    let percent = 0;
+    const interval = setInterval(() => {
+      if (percent >= 90) return clearInterval(interval);
+      percent += 10;
+      progressBar.style.width = percent + "%";
+    }, 150);
+
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-key": ADMIN_KEY,
+      },
+      body: JSON.stringify({
+        author, title, version, keyScript, versionType, fileBase64,
+      }),
+    });
+
+    const data = await res.json();
+
+    clearInterval(interval);
+    progressBar.style.width = "100%";
+
+    if (res.ok) {
+      result.innerHTML = `<i class="fas fa-check-circle"></i> Update berhasil diupload!`;
+      form.reset();
+      fileInfo.textContent = "";
+      fetchUpdates(); // refresh list
+    } else {
+      throw new Error(data.error || "Upload gagal");
+    }
+  } catch (err) {
+    result.innerHTML = `<i class="fas fa-times-circle"></i> Error: ${err.message}`;
+  } finally {
+    progressContainer.style.display = "none";
+  }
+});
+
+// Ambil updates
+async function fetchUpdates() {
+  updatesList.innerHTML = '<li><i class="fas fa-spinner fa-spin"></i> Loading...</li>';
+  try {
+    const res = await fetch(`${API_URL}?key=${READ_KEY}`);
+    const data = await res.json();
+
+    updatesList.innerHTML = "";
+    if (data.status === 200 && data.data.length > 0) {
+      data.data.forEach((u) => {
+        const li = document.createElement("li");
+        li.className = "update-item";
+        li.innerHTML = `
+          <strong><i class="fas fa-rocket"></i> ${u.title}</strong> 
+          (${u.versionType} - v${u.version})<br>
+          <div class="author"><i class="fas fa-user"></i> ${u.author}</div>
+          <div class="date"><i class="fas fa-calendar-alt"></i> ${new Date(u.updateDate).toLocaleString()}</div>
+          <a href="${u.url}" target="_blank"><i class="fas fa-download"></i> Download</a>
+        `;
+        updatesList.appendChild(li);
+      });
+    } else {
+      updatesList.innerHTML = '<li><i class="fas fa-info-circle"></i> Tidak ada update tersedia.</li>';
+    }
+  } catch (err) {
+    updatesList.innerHTML = `<li><i class="fas fa-exclamation-triangle"></i> Gagal memuat updates: ${err.message}</li>`;
+  }
+}
+
+// load awal
+fetchUpdates();
+</script>
+
+</body>
+  </html>
