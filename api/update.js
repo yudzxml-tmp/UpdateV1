@@ -1,5 +1,5 @@
 const { google } = require("googleapis");
-const formidable = require("formidable");
+const { formidable } = require("formidable");
 const admin = require("firebase-admin");
 const stream = require("stream");
 const fs = require("fs");
