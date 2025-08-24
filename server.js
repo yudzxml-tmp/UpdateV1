@@ -97,7 +97,8 @@ app.all("/api/updates", async (req, res) => {
       const cdnResult = await uploadToCdn(fileBuffer, fileName);
       if (cdnResult.error) throw new Error(cdnResult.error);
 
-      const updateDate = new Date().toISOString();
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      const updateDate = new Date().toLocaleDateString('id-ID', options);
       const docId = `${versionType.toLowerCase()}-${Date.now()}`;
       const docRef = db.collection("updates").doc(docId);
 
