@@ -282,7 +282,7 @@ function fileToBase64(file) {
   });
 }
 
-// File info
+// Tampilkan info file
 fileInput.addEventListener("change", () => {
   const file = fileInput.files[0];
   if (file) {
@@ -301,27 +301,54 @@ form.addEventListener("submit", async (e) => {
   const file = fileInput.files[0];
   if (!file || !versionType) return result.innerHTML = "⚠ Pilih semua field!";
 
-  progressContainer.style.display = "block"; progressBar.style.width = "0%";
+  progressContainer.style.display = "block"; 
+  progressBar.style.width = "0%";
+
   try {
     const fileBase64 = await fileToBase64(file);
     let percent = 0;
-    const interval = setInterval(() => { if(percent>=90) clearInterval(interval); percent+=10; progressBar.style.width=percent+"%"; },150);
+    const interval = setInterval(() => {
+      if(percent>=90) clearInterval(interval);
+      percent+=10;
+      progressBar.style.width = percent+"%";
+    },150);
 
-    const res = await fetch(API_URL,{method:"POST", headers:{"Content-Type":"application/json","x-admin-key":ADMIN_KEY}, body:JSON.stringify({author,title,version,keyScript,versionType,fileBase64})});
+    const res = await fetch(API_URL, {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "x-admin-key":ADMIN_KEY
+      },
+      body: JSON.stringify({author, title, version, keyScript, versionType, fileBase64})
+    });
+
     const data = await res.json();
-    clearInterval(interval); progressBar.style.width="100%";
+    clearInterval(interval);
+    progressBar.style.width="100%";
 
-    if(res.ok){ result.innerHTML = "✅ Update berhasil!"; form.reset(); fileInfo.textContent=""; fetchUpdates(); }
-    else throw new Error(data.error||"Upload gagal");
-  } catch(err){ result.innerHTML = `❌ Error: ${err.message}`; }
-  finally{ progressContainer.style.display="none"; }
+    if(res.ok){
+      result.innerHTML = "✅ Update berhasil!";
+      form.reset(); 
+      fileInfo.textContent="";
+      fetchUpdates();
+    } else {
+      throw new Error(data.error || "Upload gagal");
+    }
+  } catch(err){
+    result.innerHTML = `❌ Error: ${err.message}`;
+  } finally{
+    setTimeout(()=>{progressContainer.style.display="none";}, 500);
+  }
 });
 
 // Delete update
 async function deleteUpdate(docId, element){
   if(!confirm("⚠ Yakin ingin menghapus update ini?")) return;
   try{
-    const res = await fetch(`${API_URL}?docId=${docId}`, {method:"DELETE", headers:{"x-admin-key":ADMIN_KEY}});
+    const res = await fetch(`${API_URL}?docId=${docId}`, {
+      method:"DELETE",
+      headers:{"x-admin-key":ADMIN_KEY}
+    });
     const data = await res.json();
     if(res.ok){
       element.remove();
@@ -341,6 +368,7 @@ async function fetchUpdates(){
     const res = await fetch(`${API_URL}?key=${READ_KEY}`);
     const data = await res.json();
     updatesList.innerHTML = "";
+
     if(data.status === 200 && data.data.length > 0){
       data.data.forEach(u => {
         const li = document.createElement("li");
