@@ -18,7 +18,10 @@ const driveAuth = new google.auth.GoogleAuth({
 });
 const drive = google.drive({ version: "v3", auth: driveAuth });
 
+// --- Upload file ke Google Drive via stream ---
 async function uploadFileStreamToDrive(filePath, fileName, mimetype, folderId) {
+  console.log("Uploading file to Drive:", { filePath, fileName, mimetype, folderId });
+
   const fileStream = fs.createReadStream(filePath);
   const bufferStream = new stream.PassThrough();
   fileStream.pipe(bufferStream);
@@ -29,6 +32,8 @@ async function uploadFileStreamToDrive(filePath, fileName, mimetype, folderId) {
     fields: "id, webViewLink, webContentLink",
   });
 
+  console.log("Upload result:", response.data);
+
   return {
     fileId: response.data.id,
     viewLink: response.data.webViewLink,
@@ -36,6 +41,7 @@ async function uploadFileStreamToDrive(filePath, fileName, mimetype, folderId) {
   };
 }
 
+// --- Ambil data update terakhir ---
 async function updatebot() {
   const docRef = db.collection("updates").doc("bot");
   const doc = await docRef.get();
@@ -43,6 +49,7 @@ async function updatebot() {
   return { status: 200, data: doc.data() };
 }
 
+// --- Handler API ---
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -54,10 +61,12 @@ module.exports = async (req, res) => {
     const { key } = req.query;
     if (key !== "YUDZXMLDEVX7BOTZ")
       return res.status(400).json({ error: "Key tidak valid." });
+
     try {
       const data = await updatebot();
       return res.status(200).json(data);
     } catch (err) {
+      console.error("GET error:", err);
       return res.status(500).json({ error: err.message });
     }
   }
@@ -70,27 +79,37 @@ module.exports = async (req, res) => {
     const form = formidable({ multiples: false, keepExtensions: true });
 
     form.parse(req, async (err, fields, files) => {
-      if (err) return res.status(500).json({ error: err.message });
+      if (err) {
+        console.error("Form parse error:", err);
+        return res.status(500).json({ error: err.message });
+      }
 
       try {
-        // pastikan semua field string
+        console.log("Fields received:", fields);
+        console.log("Files received:", files);
+
+        // Pastikan semua field string
         const author = String(fields.author || "");
         const title = String(fields.title || "");
         const version = String(fields.version || "");
         const keyScript = String(fields.keyScript || "");
         const versionType = String(fields.versionType || "").toLowerCase();
-        const file = files.file;
 
+        const file = files.file;
         if (!author || !title || !version || !keyScript || !versionType || !file)
           return res.status(400).json({ error: "Semua field wajib diisi + file wajib ada" });
 
         if (!["full", "lite"].includes(versionType))
           return res.status(400).json({ error: "versionType harus 'full' atau 'lite'" });
 
+        // ambil path file dengan aman
+        const filePath = file.filepath || file.path;
+        if (!filePath) return res.status(500).json({ error: "File path tidak ditemukan" });
+
         const fileName = `updates-${versionType}-${Date.now()}-${title}.zip`;
         const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
-        const fileDrive = await uploadFileStreamToDrive(file.filepath, fileName, file.mimetype, folderId);
+        const fileDrive = await uploadFileStreamToDrive(filePath, fileName, file.mimetype, folderId);
 
         const updateDate = new Date().toISOString();
         const docRef = db.collection("updates").doc("bot");
@@ -106,6 +125,8 @@ module.exports = async (req, res) => {
           url_full: versionType === "full" ? fileDrive.downloadLink : oldData.url_full || "",
           url_lite: versionType === "lite" ? fileDrive.downloadLink : oldData.url_lite || "",
         };
+
+        console.log("New data to save:", newData);
 
         await docRef.set(newData);
 
